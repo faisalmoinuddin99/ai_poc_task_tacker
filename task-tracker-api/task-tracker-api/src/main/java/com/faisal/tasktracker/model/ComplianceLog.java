@@ -32,5 +32,5 @@ public class ComplianceLog {
     private Boolean compliant;
 
     private String reason;
-    
+
 }
