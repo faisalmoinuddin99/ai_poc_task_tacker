@@ -8,14 +8,15 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    List<Task> findByAssignedTo(User user);
+    List<Task> findByAssignedTo(Optional<User> user);
 
-    List<Task> findByAssignedToAndStatus(User user, TaskStatus status);
+    List<Task> findByAssignedToAndStatus(Optional<User> user, TaskStatus status);
 
     List<Task> findByTargetDate(LocalDate date);
 }
