@@ -1,70 +1,61 @@
 package com.faisal.tasktracker.service;
 
-import com.faisal.tasktracker.model.ComplianceLog;
-import com.faisal.tasktracker.model.Task;
-import com.faisal.tasktracker.model.TaskStatus;
-import com.faisal.tasktracker.model.User;
+import com.faisal.tasktracker.model.*;
 import com.faisal.tasktracker.repository.ComplianceLogRepository;
 import com.faisal.tasktracker.repository.TaskRepository;
-import com.faisal.tasktracker.repository.TaskUpdateRepository;
 import com.faisal.tasktracker.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ComplianceService {
 
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
-    private final TaskUpdateRepository taskUpdateRepository;
     private final ComplianceLogRepository complianceLogRepository;
 
-    // Manual constructor injection (replaces @RequiredArgsConstructor)
     public ComplianceService(
             UserRepository userRepository,
             TaskRepository taskRepository,
-            TaskUpdateRepository taskUpdateRepository,
-            ComplianceLogRepository complianceLogRepository) {
+            ComplianceLogRepository complianceLogRepository
+    ) {
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
-        this.taskUpdateRepository = taskUpdateRepository;
         this.complianceLogRepository = complianceLogRepository;
     }
 
-    public void checkDailyCompliance(LocalDate date) {
+    public void checkDailyCompliance() {
+        LocalDate today = LocalDate.now();
 
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
 
+            // Skip managers later if needed
             List<Task> activeTasks =
-                    taskRepository.findByAssignedToAndStatus(Optional.ofNullable(user), TaskStatus.IN_PROGRESS);
+                    taskRepository.findByAssignedToAndStatus(user, TaskStatus.IN_PROGRESS);
 
             boolean compliant = true;
-            String reason = "All tasks updated";
+            String reason = "All active tasks updated";
 
-            for (Task task : activeTasks) {
-                boolean updated = taskUpdateRepository
-                        .findByTaskIdAndUserIdAndUpdateDate(
-                                task.getId(),
-                                user.getId(),
-                                date
-                        ).isPresent();
-
-                if (!updated) {
-                    compliant = false;
-                    reason = "No update for task: " + task.getTitle();
-                    break;
-                }
+            if (!activeTasks.isEmpty()) {
+                // for now: NO update tracking → auto mark non-compliant
+                compliant = false;
+                reason = "No daily update provided for active tasks";
             }
 
-            // Create ComplianceLog manually using constructor or setters
+            // avoid duplicate entries
+            if (complianceLogRepository
+                    .findByUserIdAndDate(user.getId(), today)
+                    .isPresent()) {
+                continue;
+            }
+
             ComplianceLog log = new ComplianceLog();
             log.setUser(user);
-            log.setDate(date);
+            log.setDate(today);
             log.setCompliant(compliant);
             log.setReason(reason);
 

@@ -1,6 +1,8 @@
 package com.faisal.tasktracker.model;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -27,7 +29,71 @@ public class User {
 
     private LocalDateTime createdAt;
 
-    // ==================== Constructors ====================
+    // Add these fields to User.java
+
+    private Integer complianceStreak = 0;           // Current streak of compliant days
+    private Integer longestComplianceStreak = 0;    // Best ever streak
+    private Integer nonCompliantDaysCount = 0;     // Total non-compliant days ever
+    private LocalDate lastCompliantDate;            // To detect breaks in streak
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(id, user.id) && Objects.equals(name, user.name) && Objects.equals(email, user.email) && role == user.role && Objects.equals(dailyCapacityHours, user.dailyCapacityHours) && Objects.equals(complianceScore, user.complianceScore) && Objects.equals(createdAt, user.createdAt) && Objects.equals(complianceStreak, user.complianceStreak) && Objects.equals(longestComplianceStreak, user.longestComplianceStreak) && Objects.equals(nonCompliantDaysCount, user.nonCompliantDaysCount) && Objects.equals(lastCompliantDate, user.lastCompliantDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, email, role, dailyCapacityHours, complianceScore, createdAt, complianceStreak, longestComplianceStreak, nonCompliantDaysCount, lastCompliantDate);
+    }
+
+    public User(Long id, String name, String email, Role role, Integer dailyCapacityHours, Integer complianceScore, LocalDateTime createdAt, Integer complianceStreak, Integer longestComplianceStreak, Integer nonCompliantDaysCount, LocalDate lastCompliantDate) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.role = role;
+        this.dailyCapacityHours = dailyCapacityHours;
+        this.complianceScore = complianceScore;
+        this.createdAt = createdAt;
+        this.complianceStreak = complianceStreak;
+        this.longestComplianceStreak = longestComplianceStreak;
+        this.nonCompliantDaysCount = nonCompliantDaysCount;
+        this.lastCompliantDate = lastCompliantDate;
+    }
+
+    public Integer getComplianceStreak() {
+        return complianceStreak;
+    }
+
+    public void setComplianceStreak(Integer complianceStreak) {
+        this.complianceStreak = complianceStreak;
+    }
+
+    public Integer getLongestComplianceStreak() {
+        return longestComplianceStreak;
+    }
+
+    public void setLongestComplianceStreak(Integer longestComplianceStreak) {
+        this.longestComplianceStreak = longestComplianceStreak;
+    }
+
+    public Integer getNonCompliantDaysCount() {
+        return nonCompliantDaysCount;
+    }
+
+    public void setNonCompliantDaysCount(Integer nonCompliantDaysCount) {
+        this.nonCompliantDaysCount = nonCompliantDaysCount;
+    }
+
+    public LocalDate getLastCompliantDate() {
+        return lastCompliantDate;
+    }
+
+    public void setLastCompliantDate(LocalDate lastCompliantDate) {
+        this.lastCompliantDate = lastCompliantDate;
+    }
+// ==================== Constructors ====================
 
     /** Default no-arg constructor required by JPA */
     public User() {
@@ -116,19 +182,6 @@ public class User {
     }
 
     // ==================== equals, hashCode, toString ====================
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 
     @Override
     public String toString() {

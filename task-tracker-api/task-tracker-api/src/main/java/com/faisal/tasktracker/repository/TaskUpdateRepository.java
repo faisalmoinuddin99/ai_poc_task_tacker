@@ -18,4 +18,6 @@ public interface TaskUpdateRepository extends JpaRepository<TaskUpdate, Long> {
     );
 
     List<TaskUpdate> findByUserAndUpdateDate(User user, LocalDate updateDate);
+
+
 }
