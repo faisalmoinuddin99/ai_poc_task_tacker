@@ -2,9 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import TaskTrackerDashboard from './TaskTrackerDashboard.jsx'
+import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-  <TaskTrackerDashboard/>
+  {/* <TaskTrackerDashboard/> */}
+  <App/>
   </StrictMode>,
 )
