@@ -1,6 +1,7 @@
 package com.faisal.tasktracker.model;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -13,49 +14,47 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String title;
 
     @Column(length = 2000)
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TaskStatus status;
 
-    private Integer priority;
+    @Column(name = "priority_level")
+    private Integer priority; // 1 = Highest, 5 = Lowest (or use Priority enum later)
 
+    @Column(name = "estimated_hours")
     private Integer estimatedHours;
 
+    @Column(name = "target_date")
     private LocalDate targetDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_id")
     private User assignedTo;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     // ==================== Constructors ====================
 
-    /** Default no-arg constructor required by JPA */
+    /** Required by JPA */
     public Task() {
     }
 
-    /** Full constructor for convenience (replaces @AllArgsConstructor) */
-    public Task(Long id, String title, String description, TaskStatus status,
-                Integer priority, Integer estimatedHours, LocalDate targetDate,
-                User assignedTo, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
+    /** Convenient constructor for creating new tasks */
+    public Task(String title, String description, TaskStatus status, User assignedTo) {
         this.title = title;
         this.description = description;
         this.status = status;
-        this.priority = priority;
-        this.estimatedHours = estimatedHours;
-        this.targetDate = targetDate;
         this.assignedTo = assignedTo;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     // ==================== Getters ====================
@@ -145,16 +144,19 @@ public class Task {
     // ==================== JPA Callbacks ====================
 
     @PrePersist
-    void onCreate() {
-        createdAt = LocalDateTime.now();
-        if (status == null) {
-            status = TaskStatus.TODO;
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = TaskStatus.TODO;
+        }
+        if (this.priority == null) {
+            this.priority = 3; // Medium priority by default
         }
     }
 
     @PreUpdate
-    void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     // ==================== equals, hashCode, toString ====================
@@ -179,14 +181,15 @@ public class Task {
                 ", title='" + title + '\'' +
                 ", status=" + status +
                 ", priority=" + priority +
+                ", estimatedHours=" + estimatedHours +
                 ", targetDate=" + targetDate +
-                ", assignedTo=" + (assignedTo != null ? assignedTo.getId() : null) +
+                ", assignedTo=" + (assignedTo != null ? assignedTo.getName() + "(id=" + assignedTo.getId() + ")" : "null") +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';
     }
 
-    // ==================== Builder Pattern (manual replacement for @Builder) ====================
+    // ==================== Manual Builder Pattern ====================
 
     public static class Builder {
         private Long id;
@@ -252,21 +255,20 @@ public class Task {
 
         public Task build() {
             Task task = new Task();
-            task.id = this.id;
-            task.title = this.title;
-            task.description = this.description;
-            task.status = this.status;
-            task.priority = this.priority;
-            task.estimatedHours = this.estimatedHours;
-            task.targetDate = this.targetDate;
-            task.assignedTo = this.assignedTo;
-            task.createdAt = this.createdAt;
-            task.updatedAt = this.updatedAt;
+            task.setId(this.id);
+            task.setTitle(this.title);
+            task.setDescription(this.description);
+            task.setStatus(this.status);
+            task.setPriority(this.priority);
+            task.setEstimatedHours(this.estimatedHours);
+            task.setTargetDate(this.targetDate);
+            task.setAssignedTo(this.assignedTo);
+            task.setCreatedAt(this.createdAt);
+            task.setUpdatedAt(this.updatedAt);
             return task;
         }
     }
 
-    // Static factory method to start the builder
     public static Builder builder() {
         return new Builder();
     }

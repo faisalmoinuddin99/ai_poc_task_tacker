@@ -21,5 +21,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByTargetDate(LocalDate date);
 
     List<Task> findByAssignedToAndStatus(User user, TaskStatus status);
-
+    // Optional: more specific queries
+    List<Task> findByAssignedToAndTargetDateBetween(User assignedTo, LocalDate from, LocalDate to);
+    List<Task> findByTargetDateBetween(LocalDate from, LocalDate to);
+    List<Task> findByAssignedTo(User assignedTo);
 }

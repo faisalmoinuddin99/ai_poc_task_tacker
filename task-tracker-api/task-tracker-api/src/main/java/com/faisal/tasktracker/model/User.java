@@ -1,7 +1,6 @@
 package com.faisal.tasktracker.model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -23,43 +22,135 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Column(name = "daily_capacity_hours")
     private Integer dailyCapacityHours;
 
+    @Column(name = "compliance_score")
     private Integer complianceScore;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Add these fields to User.java
+    // Compliance tracking fields
+    @Column(name = "compliance_streak")
+    private Integer complianceStreak = 0;
 
-    private Integer complianceStreak = 0;           // Current streak of compliant days
-    private Integer longestComplianceStreak = 0;    // Best ever streak
-    private Integer nonCompliantDaysCount = 0;     // Total non-compliant days ever
-    private LocalDate lastCompliantDate;            // To detect breaks in streak
+    @Column(name = "longest_compliance_streak")
+    private Integer longestComplianceStreak = 0;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User user)) return false;
-        return Objects.equals(id, user.id) && Objects.equals(name, user.name) && Objects.equals(email, user.email) && role == user.role && Objects.equals(dailyCapacityHours, user.dailyCapacityHours) && Objects.equals(complianceScore, user.complianceScore) && Objects.equals(createdAt, user.createdAt) && Objects.equals(complianceStreak, user.complianceStreak) && Objects.equals(longestComplianceStreak, user.longestComplianceStreak) && Objects.equals(nonCompliantDaysCount, user.nonCompliantDaysCount) && Objects.equals(lastCompliantDate, user.lastCompliantDate);
+    @Column(name = "non_compliant_days_count")
+    private Integer nonCompliantDaysCount = 0;
+
+    @Column(name = "last_compliant_date")
+    private LocalDate lastCompliantDate;
+
+    // ==================== JPA Callbacks ====================
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.complianceScore == null) {
+            this.complianceScore = 100;
+        }
+        if (this.dailyCapacityHours == null) {
+            this.dailyCapacityHours = 8;
+        }
+        if (this.role == null) {
+            this.role = Role.DEVELOPER; // assuming you have a default
+        }
+        // Initialize defaults if null
+        if (this.complianceStreak == null) this.complianceStreak = 0;
+        if (this.longestComplianceStreak == null) this.longestComplianceStreak = 0;
+        if (this.nonCompliantDaysCount == null) this.nonCompliantDaysCount = 0;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, email, role, dailyCapacityHours, complianceScore, createdAt, complianceStreak, longestComplianceStreak, nonCompliantDaysCount, lastCompliantDate);
+    // ==================== Constructors ====================
+
+    /** Required by JPA */
+    public User() {
     }
 
-    public User(Long id, String name, String email, Role role, Integer dailyCapacityHours, Integer complianceScore, LocalDateTime createdAt, Integer complianceStreak, Integer longestComplianceStreak, Integer nonCompliantDaysCount, LocalDate lastCompliantDate) {
-        this.id = id;
+    /** Convenient constructor for basic user creation */
+    public User(String name, String email, Role role) {
+        this.name = name;
+        this.email = email;
+        this.role = role;
+    }
+
+    /** Full constructor for testing or manual instantiation */
+    public User(String name, String email, Role role, Integer dailyCapacityHours,
+                Integer complianceScore, Integer complianceStreak,
+                Integer longestComplianceStreak, Integer nonCompliantDaysCount,
+                LocalDate lastCompliantDate) {
         this.name = name;
         this.email = email;
         this.role = role;
         this.dailyCapacityHours = dailyCapacityHours;
         this.complianceScore = complianceScore;
-        this.createdAt = createdAt;
         this.complianceStreak = complianceStreak;
         this.longestComplianceStreak = longestComplianceStreak;
         this.nonCompliantDaysCount = nonCompliantDaysCount;
         this.lastCompliantDate = lastCompliantDate;
+    }
+
+    // ==================== Getters and Setters ====================
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public Integer getDailyCapacityHours() {
+        return dailyCapacityHours;
+    }
+
+    public void setDailyCapacityHours(Integer dailyCapacityHours) {
+        this.dailyCapacityHours = dailyCapacityHours;
+    }
+
+    public Integer getComplianceScore() {
+        return complianceScore;
+    }
+
+    public void setComplianceScore(Integer complianceScore) {
+        this.complianceScore = complianceScore;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Integer getComplianceStreak() {
@@ -93,95 +184,22 @@ public class User {
     public void setLastCompliantDate(LocalDate lastCompliantDate) {
         this.lastCompliantDate = lastCompliantDate;
     }
-// ==================== Constructors ====================
-
-    /** Default no-arg constructor required by JPA */
-    public User() {
-    }
-
-    /** Full constructor (replaces @AllArgsConstructor) */
-    public User(Long id, String name, String email, Role role,
-                Integer dailyCapacityHours, Integer complianceScore, LocalDateTime createdAt) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.role = role;
-        this.dailyCapacityHours = dailyCapacityHours;
-        this.complianceScore = complianceScore;
-        this.createdAt = createdAt;
-    }
-
-    // ==================== Getters ====================
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public Integer getDailyCapacityHours() {
-        return dailyCapacityHours;
-    }
-
-    public Integer getComplianceScore() {
-        return complianceScore;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    // ==================== Setters ====================
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public void setDailyCapacityHours(Integer dailyCapacityHours) {
-        this.dailyCapacityHours = dailyCapacityHours;
-    }
-
-    public void setComplianceScore(Integer complianceScore) {
-        this.complianceScore = complianceScore;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    // ==================== JPA Callback ====================
-
-    @PrePersist
-    void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.complianceScore == null) {
-            this.complianceScore = 100;
-        }
-    }
 
     // ==================== equals, hashCode, toString ====================
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(id, user.id) &&
+                Objects.equals(email, user.email) && // email is unique
+                Objects.equals(name, user.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, email, name);
+    }
 
     @Override
     public String toString() {
@@ -192,11 +210,15 @@ public class User {
                 ", role=" + role +
                 ", dailyCapacityHours=" + dailyCapacityHours +
                 ", complianceScore=" + complianceScore +
+                ", complianceStreak=" + complianceStreak +
+                ", longestComplianceStreak=" + longestComplianceStreak +
+                ", nonCompliantDaysCount=" + nonCompliantDaysCount +
+                ", lastCompliantDate=" + lastCompliantDate +
                 ", createdAt=" + createdAt +
                 '}';
     }
 
-    // ==================== Manual Builder Pattern ====================
+    // ==================== Builder Pattern ====================
 
     public static class Builder {
         private Long id;
@@ -206,6 +228,10 @@ public class User {
         private Integer dailyCapacityHours;
         private Integer complianceScore;
         private LocalDateTime createdAt;
+        private Integer complianceStreak = 0;
+        private Integer longestComplianceStreak = 0;
+        private Integer nonCompliantDaysCount = 0;
+        private LocalDate lastCompliantDate;
 
         public Builder id(Long id) {
             this.id = id;
@@ -242,6 +268,26 @@ public class User {
             return this;
         }
 
+        public Builder complianceStreak(Integer complianceStreak) {
+            this.complianceStreak = complianceStreak;
+            return this;
+        }
+
+        public Builder longestComplianceStreak(Integer longestComplianceStreak) {
+            this.longestComplianceStreak = longestComplianceStreak;
+            return this;
+        }
+
+        public Builder nonCompliantDaysCount(Integer nonCompliantDaysCount) {
+            this.nonCompliantDaysCount = nonCompliantDaysCount;
+            return this;
+        }
+
+        public Builder lastCompliantDate(LocalDate lastCompliantDate) {
+            this.lastCompliantDate = lastCompliantDate;
+            return this;
+        }
+
         public User build() {
             User user = new User();
             user.id = this.id;
@@ -251,11 +297,14 @@ public class User {
             user.dailyCapacityHours = this.dailyCapacityHours;
             user.complianceScore = this.complianceScore;
             user.createdAt = this.createdAt;
+            user.complianceStreak = this.complianceStreak;
+            user.longestComplianceStreak = this.longestComplianceStreak;
+            user.nonCompliantDaysCount = this.nonCompliantDaysCount;
+            user.lastCompliantDate = this.lastCompliantDate;
             return user;
         }
     }
 
-    // Static factory method to start the builder
     public static Builder builder() {
         return new Builder();
     }

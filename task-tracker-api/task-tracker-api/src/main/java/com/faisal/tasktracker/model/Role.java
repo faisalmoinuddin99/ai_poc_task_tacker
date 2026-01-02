@@ -1,6 +1,5 @@
 package com.faisal.tasktracker.model;
 
 public enum Role {
-    MEMBER,
-    MANAGER
+    DEVELOPER, MANAGER, ADMIN, MEMBER   // <-- Add this
 }
