@@ -1,7 +1,14 @@
 // src/services/api.js
 
 export const API_BASE_URL = 'http://localhost:8082/api';
-export const AI_API_URL = 'http://localhost:8082/api/ai/ask';
+
+// ==================== AI ENDPOINTS ====================
+
+// v1 — Old plain-text AI endpoint
+export const AI_V1_URL = `${API_BASE_URL}/ai/ask`;
+
+// v2 — New structured AI endpoint (the one we improved)
+export const AI_V2_URL = `${API_BASE_URL}/v2/ai/ask`;
 
 // ==================== REAL API FUNCTIONS ====================
 
@@ -10,8 +17,7 @@ export const AI_API_URL = 'http://localhost:8082/api/ai/ask';
  */
 export const fetchUsers = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/users`); // Adjust endpoint if different
-    // If you don't have a /users endpoint yet, keep mock or create one
+    const response = await fetch(`${API_BASE_URL}/users`);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch users: ${response.status}`);
@@ -19,7 +25,6 @@ export const fetchUsers = async () => {
 
     const users = await response.json();
 
-    // Map to expected frontend shape
     return users.map(user => ({
       id: user.id,
       name: user.name,
@@ -30,14 +35,12 @@ export const fetchUsers = async () => {
     }));
   } catch (error) {
     console.error('Error fetching users:', error);
-    // Fallback: return empty array or throw
     return [];
   }
 };
 
 /**
  * Fetch tasks for a specific user by email
- * @param {string} email - User's email
  */
 export const fetchTasksForUser = async (email) => {
   if (!email) {
@@ -49,15 +52,12 @@ export const fetchTasksForUser = async (email) => {
     const response = await fetch(`${API_BASE_URL}/tasks/user/${encodeURIComponent(email)}`);
 
     if (!response.ok) {
-      if (response.status === 404) {
-        return []; // No tasks → empty array is fine
-      }
+      if (response.status === 404) return [];
       throw new Error(`Failed to fetch tasks: ${response.status}`);
     }
 
     const rawTasks = await response.json();
 
-    // Normalize: flatten structure to match what TasksTab & OverviewTab expect
     return rawTasks.map(task => ({
       id: task.id,
       title: task.title,
@@ -65,8 +65,6 @@ export const fetchTasksForUser = async (email) => {
       status: task.status || 'IN_PROGRESS',
       estimatedHours: task.estimatedHours,
       targetDate: task.targetDate,
-      // Optional: if you want assignee info later
-      // assignedUserName: task.assignedTo?.name,
     }));
   } catch (error) {
     console.error(`Error fetching tasks for ${email}:`, error);
@@ -75,15 +73,15 @@ export const fetchTasksForUser = async (email) => {
 };
 
 /**
- * Ask AI - already working perfectly
+ * Ask AI v1 — Plain text in/out (your original working version)
  */
-export const askAI = async (message) => {
+export const askAIV1 = async (message) => {
   if (!message?.trim()) {
     throw new Error('Message is required');
   }
 
   try {
-    const response = await fetch(AI_API_URL, {
+    const response = await fetch(AI_V1_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
@@ -93,13 +91,43 @@ export const askAI = async (message) => {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
-      throw new Error(`AI request failed: ${response.status} ${errorText}`.trim());
+      throw new Error(`AI v1 request failed: ${response.status} ${errorText}`.trim());
     }
 
     const text = await response.text();
     return text.trim();
   } catch (err) {
-    console.error('askAI error:', err);
+    console.error('askAIV1 error:', err);
     throw err;
   }
 };
+
+export const askAIV2 = async (message) => {
+  if (!message?.trim()) {
+    throw new Error('Message is required');
+  }
+
+  try {
+    const response = await fetch('http://localhost:8082/api/v2/ai/ask', {  // ← Correct path
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',  // ← JSON, not text/plain
+      },
+      body: JSON.stringify({ message: message.trim() }),  // ← Proper JSON body
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`AI request failed: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();  // ← Parse JSON response
+    return data.answer || 'No response from AI.';
+  } catch (err) {
+    console.error('askAIV2 error:', err);
+    throw err;
+  }
+};
+
+// Make askAI use the working v2 version
+export const askAI = askAIV2;  // ← This is the only line you need to change/add

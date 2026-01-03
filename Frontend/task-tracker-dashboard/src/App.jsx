@@ -11,7 +11,8 @@ import { LoadingSpinner } from "./components/common/LoadingSpinner";
 import { fetchUsers, fetchTasksForUser } from "./services/api";
 import { calculateTeamStats, calculateTaskStats } from "./utils/calculations";
 import { MainLayout } from "./components/layouts/MainLayout";
-import { AITab2 } from "./components/dashboard/AiTab2";
+import { AiTab2 } from "./components/dashboard/AiTab2";
+
 
 function App() {
   const [users, setUsers] = useState([]);
@@ -103,7 +104,7 @@ function App() {
       )}
 
       {selectedTab === "ai" && <AITab />}
-      {selectedTab === "ai2" && <AITab2 />}
+      {selectedTab === "ai2" && <AiTab2 />}
     </MainLayout>
   );
 }
